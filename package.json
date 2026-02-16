@@ -1,0 +1,31 @@
+{
+  "name": "commotion-poc",
+  "version": "0.1.0",
+  "description": "Proof of concept for Commotion Realtime API integration",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test:connect": "ts-node src/test-connection.ts",
+    "test:audio": "ts-node src/test-audio.ts"
+  },
+  "keywords": [
+    "commotion",
+    "realtime",
+    "voice",
+    "websocket"
+  ],
+  "author": "Maven AGI",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.16.0",
+    "dotenv": "^16.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "@types/ws": "^8.5.10",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2"
+  }
+}
