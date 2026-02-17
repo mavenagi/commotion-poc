@@ -40,12 +40,55 @@ wss://voice-agent-realtime.models.gocommotion.com/v1/realtime?model={model_name}
 - Voice field is `null` in `session.created`, gets populated after `session.update`
 - Events follow OpenAI-compatible structure with `type` field
 
+### Full Event Flow (Audio Streaming)
+```
+Client                          Server
+  |                               |
+  |------- audio chunks --------->|
+  |                               |---> input_audio_buffer.speech_started
+  |                               |---> input_audio_buffer.speech_stopped
+  |                               |---> input_audio_buffer.committed
+  |                               |---> conversation.item.created
+  |                               |---> conversation.item.input_audio_transcription.completed
+  |                               |
+  |--- input_audio_buffer.commit ->|
+  |--- response.create ----------->|
+  |                               |---> response.created
+  |                               |---> response.output_item.added
+  |                               |---> response.content_part.added
+  |                               |---> response.audio.delta (streaming)
+  |                               |---> response.audio_transcript.delta (streaming)
+  |                               |---> response.audio_transcript.done
+  |                               |---> response.audio.done
+  |                               |---> response.content_part.done
+  |                               |---> response.output_item.done
+  |                               |---> response.done
+```
+
 ### Event Types (Confirmed)
 | Event | Direction | Purpose | Status |
 |-------|-----------|---------|--------|
 | `session.created` | Server → Client | Session initialized | ✅ Tested |
 | `session.updated` | Server → Client | Config applied | ✅ Tested |
 | `session.update` | Client → Server | Configure session | ✅ Tested |
+| `input_audio_buffer.append` | Client → Server | Send audio chunk | ✅ Tested |
+| `input_audio_buffer.commit` | Client → Server | Finalize audio buffer | ✅ Tested |
+| `input_audio_buffer.speech_started` | Server → Client | VAD: speech detected | ✅ Tested |
+| `input_audio_buffer.speech_stopped` | Server → Client | VAD: silence detected | ✅ Tested |
+| `input_audio_buffer.committed` | Server → Client | Buffer finalized | ✅ Tested |
+| `conversation.item.created` | Server → Client | Item added to history | ✅ Tested |
+| `conversation.item.input_audio_transcription.completed` | Server → Client | Transcript ready | ✅ Tested |
+| `response.create` | Client → Server | Request response | ✅ Tested |
+| `response.created` | Server → Client | Response started | ✅ Tested |
+| `response.output_item.added` | Server → Client | Output item created | ✅ Tested |
+| `response.content_part.added` | Server → Client | Content part added | ✅ Tested |
+| `response.audio.delta` | Server → Client | Audio chunk | ✅ Tested |
+| `response.audio_transcript.delta` | Server → Client | Transcript chunk | ✅ Tested |
+| `response.audio_transcript.done` | Server → Client | Transcript complete | ✅ Tested |
+| `response.audio.done` | Server → Client | Audio complete | ✅ Tested |
+| `response.content_part.done` | Server → Client | Content complete | ✅ Tested |
+| `response.output_item.done` | Server → Client | Output complete | ✅ Tested |
+| `response.done` | Server → Client | Response complete | ✅ Tested |
 
 ---
 
@@ -120,26 +163,64 @@ wss://voice-agent-realtime.models.gocommotion.com/v1/realtime?model={model_name}
 - **Comparison**: OpenAI uses path: `/v1/realtime?model=...` (same actually)
 - **Status**: Standard WebSocket query param pattern
 
+### 3. Duplicate Events (2026-02-17)
+- **Observation**: Some events fire multiple times during response generation:
+  - `response.created` (2x)
+  - `response.output_item.added` (2x)
+  - `response.content_part.added` (2x)
+- **Hypothesis**: Multi-part response or internal retry mechanism
+- **Impact**: None - doesn't affect functionality, just need to handle gracefully
+- **Recommendation**: Deduplicate by event ID if available, or treat as idempotent
+
+### 4. Late Audio Chunks (2026-02-17)
+- **Observation**: ~3KB of audio chunks arrived after `response.done` event
+- **Impact**: Minimal - audio file still complete and valid
+- **Recommendation**: Continue buffering audio.delta events until connection closes or timeout
+- **Possible cause**: Network buffering or timing issue
+
+### 5. Audio Buffer Commit Required
+- **Observation**: Must explicitly send `input_audio_buffer.commit` before `response.create`
+- **Comparison**: OpenAI may handle this automatically or differently
+- **Status**: Required step in Commotion protocol
+
 ---
+
+## ✅ Audio Streaming (Completed 2026-02-17)
+
+### Sending Audio
+- ✅ `input_audio_buffer.append` - Chunks sent successfully
+- ✅ Base64 encoding - Working correctly
+- ✅ Chunk size - 4800 bytes (~0.1 sec at 24kHz PCM16) works well
+- ✅ Streaming timing - 20ms delay between chunks simulates real-time
+
+### Receiving Audio
+- ✅ `response.audio.delta` - Receives audio chunks progressively
+- ✅ Base64 decoding - Audio reconstructed correctly
+- ✅ Output format - PCM16 24kHz mono as configured
+- ✅ Audio quality - Good (saved as WAV for verification)
+
+### VAD (Voice Activity Detection)
+- ✅ `input_audio_buffer.speech_started` - Fires during streaming
+- ✅ `input_audio_buffer.speech_stopped` - Fires after silence
+- ✅ Real-time detection - Works during active streaming
+- ✅ Sensitivity - Appropriate for speech detection
+
+### Response Generation
+- ✅ `response.create` - Triggers response successfully
+- ✅ `response.done` - Fires when complete
+- ✅ Transcript quality - Automatic transcription working
+- ✅ Latency - ~4.8 seconds for 4.47-second response (reasonable)
+
+### Transcription
+- ✅ Automatic input transcription via `conversation.item.input_audio_transcription.completed`
+- ✅ Streaming transcript during response via `response.audio_transcript.delta`
+- ✅ Transcript complete event via `response.audio_transcript.done`
 
 ## 🔬 Still Untested
 
-### Audio Streaming
-- [ ] Sending audio via `input_audio_buffer.append`
-- [ ] Receiving audio via `response.audio.delta`
-- [ ] Base64 encoding/decoding correctness
-- [ ] Chunk size optimization
-
-### VAD (Voice Activity Detection)
-- [ ] `input_audio_buffer.speech_started` events
-- [ ] `input_audio_buffer.speech_stopped` events
-- [ ] VAD sensitivity/behavior
-
-### Response Generation
-- [ ] `response.create` triggering
+### Response Control
 - [ ] `response.cancel` behavior
-- [ ] `response.done` event timing
-- [ ] Transcript quality (`response.audio_transcript.delta`)
+- [ ] Interrupting ongoing responses
 
 ### Error Handling
 - [ ] Invalid API key behavior
@@ -163,7 +244,12 @@ wss://voice-agent-realtime.models.gocommotion.com/v1/realtime?model={model_name}
 | Authentication | ✅ Pass | 2026-02-17 | Bearer token works |
 | Session Creation | ✅ Pass | 2026-02-17 | Session ID received |
 | Session Configuration | ✅ Pass | 2026-02-17 | Voice, temp, audio format accepted |
-| Audio Streaming | ⏳ Pending | - | Next test |
+| Audio Upload (Send) | ✅ Pass | 2026-02-17 | 104 chunks, 484.9 KB in 2.15s |
+| Audio Download (Receive) | ✅ Pass | 2026-02-17 | 209.5 KB, 4.47s duration |
+| VAD (Speech Detection) | ✅ Pass | 2026-02-17 | Detected speech start/stop |
+| Transcription | ✅ Pass | 2026-02-17 | Auto transcription working |
+| Response Generation | ✅ Pass | 2026-02-17 | End-to-end ~4.8s latency |
+| Audio Quality | ✅ Pass | 2026-02-17 | PCM16 24kHz verified |
 
 ---
 
