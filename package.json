@@ -8,7 +8,8 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "test:connect": "ts-node src/test-connection.ts",
-    "test:audio": "ts-node src/test-audio.ts"
+    "test:audio": "ts-node src/test-audio.ts",
+    "test:noise": "ts-node src/test-noise-handling.ts"
   },
   "keywords": [
     "commotion",

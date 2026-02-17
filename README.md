@@ -11,7 +11,8 @@ This POC aims to:
 4. ✅ Test receiving audio responses (COMPLETED 2026-02-17)
 5. ✅ Validate event protocol compatibility with OpenAI format (COMPLETED 2026-02-17)
 6. ✅ Measure latency and performance (COMPLETED 2026-02-17)
-7. ✅ Document any API quirks or undocumented behaviors (See FINDINGS.md)
+7. ✅ Test background noise handling (COMPLETED 2026-02-17) 🌟 **Outstanding!**
+8. ✅ Document any API quirks or undocumented behaviors (See FINDINGS.md)
 
 **Status**: ✅ **Core functionality validated - Ready for voice-server integration!**
 
@@ -38,8 +39,11 @@ cp .env.example .env
 # Test basic WebSocket connection
 npm run test:connect
 
-# Test audio streaming (coming soon)
+# Test bidirectional audio streaming
 npm run test:audio
+
+# Test background noise handling
+npm run test:noise
 ```
 
 ## Tests

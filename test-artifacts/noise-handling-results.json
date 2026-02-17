@@ -1,0 +1,73 @@
+{
+  "timestamp": "2026-02-17T12:46:28.532Z",
+  "model": "commotion-medium",
+  "expectedTranscription": "the quick brown fox jumps over the lazy dog this is a test of speech recognition with background noise",
+  "results": [
+    {
+      "filename": "clean-speech.pcm",
+      "noiseType": "Clean",
+      "snrLevel": "N/A",
+      "transcription": "This is a test of speech recognition with background noise.",
+      "vadEvents": {
+        "speechStarted": 2,
+        "speechStopped": 2
+      },
+      "success": true
+    },
+    {
+      "filename": "white-noise-5db.pcm",
+      "noiseType": "White Noise",
+      "snrLevel": "+5dB (easy)",
+      "transcription": "This is a test of speech recognition with background noise.",
+      "vadEvents": {
+        "speechStarted": 2,
+        "speechStopped": 2
+      },
+      "success": true
+    },
+    {
+      "filename": "white-noise-0db.pcm",
+      "noiseType": "White Noise",
+      "snrLevel": "0dB (moderate)",
+      "transcription": "This is a test of speech recognition with background noise.",
+      "vadEvents": {
+        "speechStarted": 3,
+        "speechStopped": 2
+      },
+      "success": true
+    },
+    {
+      "filename": "white-noise-neg5db.pcm",
+      "noiseType": "White Noise",
+      "snrLevel": "-5dB (hard)",
+      "transcription": "This is a test of speech recognition with background noise.",
+      "vadEvents": {
+        "speechStarted": 2,
+        "speechStopped": 2
+      },
+      "success": true
+    },
+    {
+      "filename": "pink-noise-0db.pcm",
+      "noiseType": "Pink Noise",
+      "snrLevel": "0dB (crowd/traffic)",
+      "transcription": "This is a test of speech recognition with background noise.",
+      "vadEvents": {
+        "speechStarted": 3,
+        "speechStopped": 2
+      },
+      "success": true
+    },
+    {
+      "filename": "brown-noise-0db.pcm",
+      "noiseType": "Brown Noise",
+      "snrLevel": "0dB (wind/engines)",
+      "transcription": "This is a test of speech recognition with background noise.",
+      "vadEvents": {
+        "speechStarted": 3,
+        "speechStopped": 2
+      },
+      "success": true
+    }
+  ]
+}
