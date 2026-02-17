@@ -5,13 +5,13 @@ A minimal proof-of-concept project to test and validate the Commotion Realtime A
 ## Purpose
 
 This POC aims to:
-1. ✅ Verify WebSocket connection to Commotion API
-2. ✅ Test authentication mechanism
+1. ✅ Verify WebSocket connection to Commotion API (COMPLETED 2026-02-17)
+2. ✅ Test authentication mechanism (COMPLETED 2026-02-17)
 3. ⏳ Test audio streaming (send PCM16 audio)
 4. ⏳ Test receiving audio responses
-5. ⏳ Validate event protocol compatibility with OpenAI format
+5. ✅ Validate event protocol compatibility with OpenAI format (COMPLETED 2026-02-17)
 6. ⏳ Measure latency and performance
-7. ⏳ Document any API quirks or undocumented behaviors
+7. ✅ Document any API quirks or undocumented behaviors (See FINDINGS.md)
 
 ## Setup
 
@@ -114,14 +114,23 @@ https://voice-agent-realtime.models.gocommotion.com/health
 
 ## Findings & Notes
 
-### ✅ Confirmed
-- (To be filled in after testing)
+📄 **See [FINDINGS.md](./FINDINGS.md) for detailed observations**
+
+### ✅ Confirmed (2026-02-17)
+- WebSocket connection and authentication working correctly
+- Session lifecycle: connection → session.created → session.update → session.updated
+- Event protocol follows OpenAI-compatible structure
+- Model selection via query parameter (?model=commotion-medium)
+- Voice configuration via session.update (initially null in session.created)
+- PCM16 audio format accepted (streaming not yet tested)
+- Session ID format: `sess_` + 24-char hex string
 
 ### ⚠️ Issues/Quirks
-- (To be filled in after testing)
+- Voice field is `null` in session.created, must be set via session.update
+- (More to be added as testing continues)
 
 ### 📊 Performance
-- (To be filled in after testing)
+- (To be measured during audio streaming tests)
 
 ## Next Steps
 
